@@ -6,6 +6,7 @@ const { User } = require("../db/")
 // signup route
 const zod = require("zod");
 const { User } = require("../db");
+const { authMiddleware } = require("../middleware");
 const signupBody = {
     username:zod.string().email(),
     password:zod.string(),
@@ -78,3 +79,48 @@ router.post('/signin', async (req, res) => {
     })
 });
 
+// Update info route
+
+const updateSchema = zod.object({
+    username: zod.optional(),
+    firstName: zod.optional(),
+    lastName: zod.optional()
+});
+// optional() allows the parameter to wither be there or not. 
+
+router.put('/', authMiddleware,async (req, res) => {
+    // need to validate the inputs first using zod
+    const body = req.body;
+    const { success } = updateSchema.safeParse(req.body);
+    if (!success){
+        res.status(411).json({
+            message: 'Error while updating information'
+        })
+    }
+    await User.updateOne({
+        _id:userId,
+
+    }, body)
+    res.json({
+        message: "Updated successfully"
+    })
+});
+
+// Route to get usernames form the BE, filterable by firstName/lastName
+
+router.get('/bulk', async (req, res) => {
+    const filter = req.params.filter || "";
+    // first I will try and fetch everything
+    const users = await User.find({
+        $or: [{firstName: {'$regex': filter}}, {lastName: {'$regex': filter}}]
+    });
+
+    res.status(200).json({
+        user:users.map(user => ({
+            username: user.username,
+            firstName: user.firstName,
+            lastName:user.lastName,
+            _id:user._id
+        }))
+    })
+})
