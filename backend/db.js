@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
 
 const accountSchema = new mongoose.Schema({
     userId: {
-        type: mongoose.Schema.Types.ObjectId, // creating a reference to User model, kinda like foreign key
+        type: mongoose.Schema.Types.ObjectId, // creating a reference to User model, kinda like foreign key, so only if a user exists you can have an account and if they dont then they don't have an account
         ref: User,
         required: true
     },
