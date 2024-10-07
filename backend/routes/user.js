@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken")
-const { User } = require("../db/")
+const { User, Account } = require("../db/")
 
 // signup route
 const zod = require("zod");
-const { User } = require("../db");
+const { User, Account } = require("../db");
 const { authMiddleware } = require("../middleware");
 const signupBody = {
     username:zod.string().email(),
@@ -15,6 +15,7 @@ const signupBody = {
 };
 
 router.post('/signup', async (req, res) => {
+    
     const body = req.body;
     const { success } = signupBody.safeParse(req.body);
     if (!success){
@@ -31,8 +32,18 @@ router.post('/signup', async (req, res) => {
             message: "Email already taken / Incorrect inputs"
         })
     }
+
+    
+
     const dbUser = await User.create(body); // this is equivalent to User.create({username:req.body.username, password:req.body.password,...})
     const userId = user._id;
+
+    // Creating a new account with some existing money
+    await Account.Create({
+        userId,
+        balance: 1+Math.random()*10000
+    });
+
     const token = jwt.sign({
         userId: dbUser._id
     }, JWT_SECRET);
