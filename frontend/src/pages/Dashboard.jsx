@@ -4,9 +4,9 @@ import { Users } from "../components/Users"
 
 export const Dashboard = () => {
     return <div>
-        <Appbar></Appbar>
+        <Appbar />
         <div className="m-8">
-            <Balance />
+            <Balance value={"10,000"} />
             <Users />
         </div>
         
