@@ -1,18 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken")
-const { User, Account } = require("../db/")
-
+const { User, Account } = require("../db")
+const { JWT_SECRET } = require("../config")
 // signup route
 const zod = require("zod");
-const { User, Account } = require("../db");
+// const { User, Account } = require("../db");
 const { authMiddleware } = require("../middleware");
-const signupBody = {
+const signupBody = zod.object({
     username:zod.string().email(),
     password:zod.string(),
     firstName:zod.string(),
     lastName:zod.string()
-};
+});
 
 router.post('/signup', async (req, res) => {
     
@@ -20,26 +20,26 @@ router.post('/signup', async (req, res) => {
     const { success } = signupBody.safeParse(req.body);
     if (!success){
         return res.json({
-            message: "Email already taken / Incorrect inputs"
+            message: "Email already taken / Incorrect inputsss"
         })
     }
-    const user = User.findOne({
+    const existingUser = await User.findOne({
         username: body.username
     });
 
-    if (user._id){
+    if (existingUser){
         return res.json({
-            message: "Email already taken / Incorrect inputs"
+            message: "Email already taken / Incorrect inputss"
         })
     }
 
     
 
     const dbUser = await User.create(body); // this is equivalent to User.create({username:req.body.username, password:req.body.password,...})
-    const userId = user._id;
+    const userId = dbUser._id;
 
     // Creating a new account with some existing money
-    await Account.Create({
+    await Account.create({
         userId,
         balance: 1+Math.random()*10000
     });
@@ -99,19 +99,19 @@ const updateSchema = zod.object({
 });
 // optional() allows the parameter to wither be there or not. 
 
-router.put('/', authMiddleware,async (req, res) => {
+router.put('/', authMiddleware, async (req, res) => {
     // need to validate the inputs first using zod
-    const body = req.body;
+    
     const { success } = updateSchema.safeParse(req.body);
     if (!success){
         res.status(411).json({
             message: 'Error while updating information'
         })
     }
-    await User.updateOne({
-        _id:userId,
+    await User.updateOne(req.body, {
+        id:req.userId,
 
-    }, body)
+    })
     res.json({
         message: "Updated successfully"
     })
@@ -135,3 +135,5 @@ router.get('/bulk', async (req, res) => {
         }))
     })
 })
+
+module.exports = router;
